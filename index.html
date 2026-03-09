@@ -1,0 +1,395 @@
+// index.html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гадость</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0a0a14;
+            min-height: 100vh;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at center, #1a2645 0%, #070711 100%);
+            object-fit: cover;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* Контейнер для выносок */
+        #labels-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* Выноски-ссылки */
+        .label {
+            position: absolute;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-decoration: none;
+            text-shadow: 
+                0 0 12px rgba(0, 0, 0, 0.9),
+                0 0 4px rgba(0, 0, 0, 0.8);
+            white-space: nowrap;
+            pointer-events: auto;
+            cursor: pointer;
+            z-index: 3;
+            padding: 8px 12px;
+            transition: color 0.2s ease;
+            /* Transform будет устанавливаться через JS */
+            transform: translate(-50%, -50%);
+        }
+
+        .label:hover {
+            color: #ffffff;
+            text-shadow: 
+                0 0 15px rgba(255, 255, 255, 0.5),
+                0 0 8px rgba(0, 0, 0, 0.9);
+        }
+
+        /* Стиль для Солнца */
+        .label.sun-label {
+            color: #ffb347;
+            font-size: 20px;
+            text-shadow: 
+                0 0 15px #ff8c00,
+                0 0 30px #ff4500,
+                0 0 5px black;
+        }
+
+        .label.sun-label:hover {
+            color: #ffd700;
+            text-shadow: 
+                0 0 20px #ffaa00,
+                0 0 40px #ff5500;
+        }
+
+        /* Стиль для Луны */
+        .label.moon-label {
+            color: #e8e8e8;
+            text-shadow: 
+                0 0 12px #aaccff,
+                0 0 5px black;
+        }
+
+        .label.moon-label:hover {
+            color: white;
+            text-shadow: 0 0 20px #88aaff;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="solarCanvas"></canvas>
+    
+    <div id="labels-container"></div>
+
+<script>
+    const canvas = document.getElementById('solarCanvas');
+    const ctx = canvas.getContext('2d');
+    const labelsContainer = document.getElementById('labels-container');
+
+    let centerX, centerY;
+
+    // Данные планет
+    const planets = [
+        { color: '#c1b9a6', orbitRadius: 100, speed: 0.005 * 0.67, size: 6, name: 'Меркурий' },
+        { color: '#d4b48c', orbitRadius: 160, speed: 0.003 * 0.67, size: 8, name: 'Венера' },
+        { color: '#8ab3b3', orbitRadius: 220, speed: 0.002 * 0.67, size: 9, name: 'Земля' },
+        { color: '#bf8f6f', orbitRadius: 280, speed: 0.0015 * 0.67, size: 7, name: 'Марс' },
+        { color: '#c0a89c', orbitRadius: 350, speed: 0.001 * 0.67, size: 15, name: 'Юпитер' },
+        { color: '#b8a99a', orbitRadius: 430, speed: 0.0008 * 0.67, size: 13, name: 'Сатурн' },
+        { color: '#96a6b3', orbitRadius: 500, speed: 0.0006 * 0.67, size: 11, name: 'Уран' },
+        { color: '#617a89', orbitRadius: 570, speed: 0.0005 * 0.67, size: 10, name: 'Нептун' }
+    ];
+
+    // Данные для Луны
+    const moon = {
+        color: '#c0c5c9',
+        orbitRadius: 25,
+        speed: 0.002 * 13 * 0.67,
+        size: 3,
+        name: 'Луна'
+    };
+
+    // Начальные углы
+    let angles = [];
+    let moonAngle = 0;
+
+    // Звезды
+    let stars = [];
+
+    // Текущие позиции
+    let sunPosition = { x: 0, y: 0 };
+    let moonPosition = { x: 0, y: 0 };
+
+    // Элементы выносок
+    let sunLabelElement = null;
+    let moonLabelElement = null;
+
+    function generateStars(count = 250) {
+        stars = [];
+        for (let i = 0; i < count; i++) {
+            stars.push({
+                x: Math.random(),
+                y: Math.random(),
+                size: Math.random() * 2.5 + 0.5,
+                brightness: Math.random() * 0.5 + 0.2
+            });
+        }
+    }
+
+    function initAngles() {
+        angles = planets.map(() => Math.random() * Math.PI * 2);
+        moonAngle = Math.random() * Math.PI * 2;
+    }
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        centerX = canvas.width / 2;
+        centerY = canvas.height / 2;
+        
+        const minDimension = Math.min(window.innerWidth, window.innerHeight);
+        const scaleFactor = minDimension / 1200;
+        
+        const baseOrbits = [100, 160, 220, 280, 350, 430, 500, 570];
+        planets.forEach((planet, index) => {
+            planet.orbitRadius = baseOrbits[index] * Math.max(0.8, Math.min(1.2, scaleFactor));
+        });
+        
+        moon.orbitRadius = 25 * scaleFactor;
+    }
+
+    // Создание выносок (один раз)
+    function createLabels() {
+        labelsContainer.innerHTML = '';
+        
+        // Выноска для Солнца
+        sunLabelElement = document.createElement('a');
+        sunLabelElement.href = 'https://xiersent.github.io/sun/';
+        sunLabelElement.target = '_blank';
+        sunLabelElement.rel = 'noopener noreferrer';
+        sunLabelElement.className = 'label sun-label';
+        sunLabelElement.textContent = 'SUN';
+        labelsContainer.appendChild(sunLabelElement);
+        
+        // Выноска для Луны
+        moonLabelElement = document.createElement('a');
+        moonLabelElement.href = 'https://xiersent.github.io/moon/';
+        moonLabelElement.target = '_blank';
+        moonLabelElement.rel = 'noopener noreferrer';
+        moonLabelElement.className = 'label moon-label';
+        moonLabelElement.textContent = 'MOON';
+        labelsContainer.appendChild(moonLabelElement);
+    }
+
+    // Обновление позиций с использованием transform для центрирования
+    function updateLabels() {
+        if (sunLabelElement && sunPosition.x && sunPosition.y) {
+            // Устанавливаем точку привязки прямо на центр солнца
+            // transform: translate(-50%, -50%) уже есть в CSS
+            sunLabelElement.style.left = sunPosition.x + 'px';
+            sunLabelElement.style.top = sunPosition.y + 'px';
+        }
+        
+        if (moonLabelElement && moonPosition.x && moonPosition.y) {
+            moonLabelElement.style.left = moonPosition.x + 'px';
+            moonLabelElement.style.top = moonPosition.y + 'px';
+        }
+    }
+
+    function drawPlanet(x, y, color, size, name, isMoon = false) {
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        
+        if (isMoon) {
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.1)';
+            ctx.shadowBlur = 10;
+        } else {
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.2)';
+            ctx.shadowBlur = 18;
+        }
+        
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+
+        if (name === 'Сатурн' && !isMoon) {
+            ctx.beginPath();
+            ctx.strokeStyle = '#d9c8b8';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 4]);
+            ctx.ellipse(x, y, size * 1.8, size * 0.7, 0, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.strokeStyle = '#c9b5a2';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 5]);
+            ctx.ellipse(x, y, size * 2.1, size * 0.9, 0, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.setLineDash([]);
+        }
+    }
+
+    function drawOrbit(radius) {
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(210, 220, 240, 0.25)';
+        ctx.lineWidth = 1.0;
+        ctx.setLineDash([7, 9]);
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    function drawMoonOrbit(earthX, earthY, radius) {
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(200, 210, 230, 0.15)';
+        ctx.lineWidth = 0.8;
+        ctx.setLineDash([4, 5]);
+        ctx.arc(earthX, earthY, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    function drawSun() {
+        ctx.shadowColor = '#f2d53c';
+        ctx.shadowBlur = 60;
+
+        ctx.fillStyle = '#e8c35c';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 38, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.shadowColor = '#dbb042';
+        ctx.shadowBlur = 80;
+
+        ctx.fillStyle = '#f5d371';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 30, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        
+        sunPosition = { x: centerX, y: centerY };
+    }
+
+    function drawBackgroundStars() {
+        for (let star of stars) {
+            ctx.fillStyle = `rgba(255, 250, 240, ${star.brightness})`;
+            ctx.beginPath();
+            ctx.arc(star.x * canvas.width, star.y * canvas.height, star.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function animate() {
+        ctx.fillStyle = '#0a0a18';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(canvas.width, canvas.height));
+        gradient.addColorStop(0, 'rgba(35, 45, 75, 0.35)');
+        gradient.addColorStop(1, 'rgba(10, 10, 20, 0.9)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        drawBackgroundStars();
+        drawSun();
+
+        // Рисуем орбиты планет
+        planets.forEach(planet => {
+            drawOrbit(planet.orbitRadius);
+        });
+
+        // Обновляем углы
+        for (let i = 0; i < planets.length; i++) {
+            angles[i] -= planets[i].speed;
+        }
+        moonAngle -= moon.speed;
+
+        // Находим позицию Земли
+        const earthIndex = 2;
+        const earthX = centerX + Math.cos(angles[earthIndex]) * planets[earthIndex].orbitRadius;
+        const earthY = centerY + Math.sin(angles[earthIndex]) * planets[earthIndex].orbitRadius;
+
+        // Рисуем орбиту Луны
+        drawMoonOrbit(earthX, earthY, moon.orbitRadius);
+
+        // Рисуем все планеты кроме Земли
+        for (let i = 0; i < planets.length; i++) {
+            if (i === earthIndex) continue;
+            
+            const planet = planets[i];
+            const x = centerX + Math.cos(angles[i]) * planet.orbitRadius;
+            const y = centerY + Math.sin(angles[i]) * planet.orbitRadius;
+            drawPlanet(x, y, planet.color, planet.size, planet.name);
+        }
+
+        // Рисуем Луну
+        const moonX = earthX + Math.cos(moonAngle) * moon.orbitRadius;
+        const moonY = earthY + Math.sin(moonAngle) * moon.orbitRadius;
+        moonPosition = { x: moonX, y: moonY };
+        drawPlanet(moonX, moonY, moon.color, moon.size, moon.name, true);
+
+        // Рисуем Землю
+        const earth = planets[earthIndex];
+        drawPlanet(earthX, earthY, earth.color, earth.size, earth.name);
+
+        // Обновляем позиции выносок
+        updateLabels();
+
+        requestAnimationFrame(animate);
+    }
+
+    // Инициализация
+    resizeCanvas();
+    generateStars(350);
+    initAngles();
+    createLabels(); // Создаём выноски один раз
+    
+    window.addEventListener('resize', () => {
+        resizeCanvas();
+        updateLabels();
+    });
+
+    // Коррекция позиции после полной загрузки
+    window.addEventListener('load', () => {
+        setTimeout(updateLabels, 50);
+    });
+
+    animate();
+</script>
+</body>
+</html>
