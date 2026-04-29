@@ -43,7 +43,7 @@
         .label {
             position: absolute;
             color: white;
-            font-size: 18px;
+            font-size: clamp(14px, 2.7vw, 20px);
             font-weight: 600;
             text-decoration: none;
             white-space: nowrap;
@@ -51,11 +51,12 @@
             cursor: pointer;
             z-index: 3;
             transform: translate(-50%, -50%);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
         }
 
         .label.sun-label {
             color: white;
-            font-size: 20px;
+            font-size: clamp(16px, 3.4vw, 24px);
         }
 
         .label.moon-label {
@@ -77,268 +78,35 @@
     const ctx = canvas.getContext('2d');
     const labelsContainer = document.getElementById('labels-container');
 
-    let centerX, centerY;
-
-    const planets = [
-        { color: '#c1b9a6', orbitRadius: 100, speed: 0.005 * 0.67, size: 6, name: 'Меркурий' },
-        { color: '#d4b48c', orbitRadius: 160, speed: 0.003 * 0.67, size: 8, name: 'Венера' },
-        { color: '#8ab3b3', orbitRadius: 220, speed: 0.002 * 0.67, size: 9, name: 'Земля' },
-        { color: '#bf8f6f', orbitRadius: 280, speed: 0.0015 * 0.67, size: 7, name: 'Марс' },
-        { color: '#c0a89c', orbitRadius: 350, speed: 0.001 * 0.67, size: 15, name: 'Юпитер' },
-        { color: '#b8a99a', orbitRadius: 430, speed: 0.0008 * 0.67, size: 13, name: 'Сатурн' },
-        { color: '#96a6b3', orbitRadius: 500, speed: 0.0006 * 0.67, size: 11, name: 'Уран' },
-        { color: '#617a89', orbitRadius: 570, speed: 0.0005 * 0.67, size: 10, name: 'Нептун' }
-    ];
-
-    const moon = {
-        color: '#c0c5c9',
-        orbitRadius: 25,
-        speed: 0.002 * 13 * 0.67,
-        size: 3,
-        name: 'Луна'
-    };
-
-    let angles = [];
-    let moonAngle = 0;
+    let centerX;
+    let centerY;
+    let verticalGap;
+    let sunRadius;
+    let moonRadius;
+    let jupiterRadius;
     let stars = [];
-    let sunPosition = { x: 0, y: 0 };
-    let moonPosition = { x: 0, y: 0 };
-    let jupiterPosition = { x: 0, y: 0 };
+    let sunPosition = { x: 0, y: 0, radius: 0 };
+    let moonPosition = { x: 0, y: 0, radius: 0 };
+    let jupiterPosition = { x: 0, y: 0, radius: 0 };
+    const planetLinks = {
+        sun: 'https://xiersent.github.io/sun/',
+        moon: 'https://xiersent.github.io/moon/',
+        jupiter: 'https://cu584805.tw1.ru/'
+    };
     let sunLabelElement = null;
     let moonLabelElement = null;
     let jupiterLabelElement = null;
 
-    function generateThousandPhrases() {
-        const phrases = [];
-        
-        const russianExclamations = [
-            "Ах ты!", "Да ну!", "Тьфу", "Блин", "Вот же", "Ёклмн", "Чёрт", "Ой всё", "Фу", "Да ладно?",
-            "Эх", "Ну блин", "Тпру", "Сто-ой", "Куда", "Обалдеть", "Задолбали", "Да что ж такое", "Бесит",
-            "Ничего себе", "Ого", "Ух ты", "Ну надо же", "Вот это да", "Не может быть", "С ума сойти",
-            "Да ну нафиг", "Прикольно", "Занятно", "Хм", "Мда", "Так-так", "Опа", "Йоу", "Эй",
-            "Слушай", "Бро", "Дружище", "Народ", "Ребята", "Ну типы", "Ё-моё", "О как", "Вот так",
-            "Неожиданно", "Вот это поворот", "Круто", "Здорово", "Отлично", "Супер", "Класс", "Норм",
-            "Лады", "Добро", "Бывает", "Жизнь", "Так себе", "Не очень", "Печалька", "Радость", "Ура",
-            "Эхма", "Уф", "Ох", "Ай-яй-яй", "Ой-ой-ой", "Ну-ну", "Ла-ла-ла", "Тра-та-та", "Дзынь",
-            "Бам", "Бдыщ", "Хрясь", "Шмяк", "Бух", "Трах", "Бабах", "Пиу-пиу", "Вжух", "Шух",
-            "Ага", "Угу", "Неа", "Да", "Нет", "Может", "Наверное", "Точно", "Вряд ли", "Спорно",
-            "Офигеть", "Нифига себе", "Ппц", "Жесть", "Капец", "Атас", "Караул", "Тревога", "Шухер",
-            "Беда", "Кошмар", "Ужас", "Жуть", "Страх", "Паника", "Беспредел", "Хаос", "Бардак",
-            "Разруха", "Гниль", "Тлен", "Мрак", "Тьма", "Пустота", "Ничто", "Ноль", "Фигня", "Чушь"
-        ];
-        
-        const questions = [
-            "Зачем?", "Почему?", "Отчего?", "Зачем?", "Куда?", "Откуда?", "Когда?", "Как?", "Какой?", "Чей?",
-            "Что это?", "Кто тут?", "Где я?", "Что происходит?", "В чём дело?", "Что за дела?", "Серьёзно?",
-            "Правда?", "Неужели?", "Да ну?", "Шутите?", "Вы серьёзно?", "Мне показалось?", "Это точно?",
-            "Кто бы мог подумать?", "Как так вышло?", "Почему я?", "За что мне это?", "Что дальше?",
-            "Что делать?", "Как быть?", "Куда бежать?", "Где выход?", "Кто виноват?", "Что за бред?",
-            "Вы издеваетесь?", "Это нормально?", "Так и надо?", "Кому это нужно?", "Зачем это всё?",
-            "И что теперь?", "Ну и что?", "И чё?", "Дальше что?", "А смысл?"
-        ];
-        
-        const interjections = [
-            "О!", "А!", "Э!", "И!", "У!", "Ы!", "Эх!", "Ох!", "Ух!", "Ах!",
-            "Эге!", "Ого!", "Угу!", "Ага!", "Эээ!", "Ммм!", "Брр!", "Фух!", "Уфф!", "Офф!",
-            "Ха!", "Хе!", "Хи!", "Хо!", "Ху!", "Хм!", "Гм!", "Тьфу!", "Брысь!", "Кыш!",
-            "Цыц!", "Шшш!", "Тс-с!", "Брык!", "Хлоп!", "Топ!", "Шлёп!", "Бултых!", "Плюх!", "Дзинь!",
-            "Дзынь!", "Вжик!", "Вжжух!", "Шурх!", "Шорох", "Стук", "Грохот", "Треск", "Хруст", "Щелчок",
-            "Чавк", "Чмок", "Хлюп", "Бульк", "Пшик", "Фырк"
-        ];
-        
-        const fillers = [
-            "Эээ", "Ммм", "Нууу", "Так", "Вот", "Это", "То есть", "Как бы", "Типа", "Короче",
-            "Собственно", "Вообще", "Однако", "Между прочим", "Кстати", "В общем", "Значит", "Стало быть",
-            "Следовательно", "Похоже", "Видимо", "Очевидно", "Наверное", "Возможно", "Вероятно",
-            "Предположительно", "Говорят", "Слышал", "Читал", "Видел", "Знаю", "Помню", "Забыл",
-            "Короче говоря", "Так сказать", "В принципе", "В целом", "Как-то так", "Ну такое",
-            "Честно говоря", "Откровенно", "Прямо скажем", "Мягко выражаясь", "Если честно",
-            "По правде", "По сути", "Фактически", "Реально", "Зашибись"
-        ];
-        
-        const internetPhrases = [
-            "LOL", "OMG", "WTF", "BBQ", "OK", "K", "XD", "GG", "WP", "EZ",
-            "No way", "Really", "Seriously", "Whatever", "Anyway", "So what", "Who cares", "IDK", "TBH", "IMO",
-            "LMAO", "ROFL", "SMH", "FTW", "FML", "YOLO", "BRB", "AFK", "GTG", "TTYL",
-            "Хай", "Хеллоу", "Привет", "Здарова", "Дарова", "Здравствуйте", "Добрый день", "Салют", "Хелло",
-            "Пока", "Давай", "Бывай", "Счастливо", "Удачи", "Всего хорошего", "До связи", "До встречи",
-            "Кек", "Лол", "Рофл", "Пук", "Смех", "Хихи", "Хаха", "Бугага", "Хрю", "Мяу", "Гав",
-            "Куку", "Бе", "Ме", "Фу", "Фи", "Бее", "Мдаа", "Ой", "Ай"
-        ];
-        
-        const movieQuotes = [
-            "Я вернусь", "Баю-бай", "Вали отсюда", "С нами бог", "Бонни и Клайд", "Кто здесь?",
-            "Что ты делаешь?", "Отпусти меня", "Я устал", "Я боюсь", "Смотри", "Слушай", "Запомни",
-            "Не забывай", "Помни", "Думай", "Решай", "Действуй", "Беги", "Стой", "Летай",
-            "Падай", "Вставай", "Иди", "Стой", "Лежи", "Сиди", "Молчи", "Кричи", "Шепчи",
-            "Спи", "Проснись", "Открой глаза", "Закрой глаза", "Улыбнись", "Заплачь"
-        ];
-        
-        const onomatopoeia = [
-            "Мяу", "Гав", "Ку-ку", "Кар", "Пи-пи", "Ква-ква", "Му-у", "Бе-е", "И-го-го", "Хрю-хрю",
-            "Тик-так", "Динь-дон", "Бом-бом", "Тук-тук", "Чик-чирик", "Ж-ж-ж", "З-з-з", "Ш-ш-ш", "В-в-в", "Ф-ф-ф",
-            "Бззз", "Дзынь", "Вжжж", "Хрум", "Ням", "Ам", "Ням-ням", "Хрусть", "Щёлк", "Клик", "Бамс",
-            "Трууу", "Дуду", "Ту-ту", "Ууу", "Ау", "Ой"
-        ];
-        
-        const symbols = [
-            "???", "!!!", "...", ";;;", ":::", "---", "___", "+++", "***", "###",
-            "123", "007", "100", "999", "404", "500", "1337", "1338", "1488", "228",
-            ":-)", ":-(", ":-D", ":-P", ":-*", ":'(", ":-/", ":-|", ":-O", "8-)",
-            "0_o", "O_o", "o_O", "O_O", "^_^", "@_@", "*_*", "+_+", ">_<", "<_>"
-        ];
-        
-        const everyday = [
-            "Спокойной ночи", "Доброе утро", "Хорошего дня", "Приятного аппетита", "Будьте здоровы",
-            "С праздником", "С днём рождения", "С новым годом", "Счастья", "Здоровья",
-            "Мир вашему дому", "Хлеб да соль", "С лёгким паром", "С добрым утром", "Сладких снов",
-            "Как дела?", "Что нового?", "Как жизнь?", "Что слышно?", "Какие новости?",
-            "Хорошо", "Плохо", "Нормально", "Так себе", "Отлично", "Прекрасно", "Замечательно", "Чудесно", "Великолепно", "Изумительно",
-            "Отстой", "Дерьмово", "Хреново", "Паршиво", "Скверно"
-        ];
-        
-        const funny = [
-            "Кто сюда поставил?", "Куда пропал пылесос?", "Почему вода горит?", "Как выключить солнце?",
-            "Где мой второй носок?", "Зачем нужны споры?", "Почему рыбы не говорят?",
-            "Когда уже починят этот баг?", "А почему у панды такой цвет?",
-            "Куда делся весь джаз?", "Где находится кнопка \"Не верю\"?",
-            "Почему я это читаю?", "Кто это вообще придумал?", "Это какой-то заговор",
-            "Мир несправедлив", "Всё пропало", "Спасайся кто может", "Беги отсюда", "Закрой глаза",
-            "Нажми на кнопку", "Не нажимай", "Всё сломается", "Я предупреждал"
-        ];
-        
-        const pronouns = [
-            "Я", "Ты", "Он", "Она", "Оно", "Мы", "Вы", "Они", "Себя", "Кто", "Что", "Кого", "Чего", "Кому", "Чему", "Кем", "Чем", "О ком", "О чём",
-            "Мой", "Твой", "Его", "Её", "Наш", "Ваш", "Их", "Свой",
-            "Этот", "Эта", "Это", "Эти", "Тот", "Та", "То", "Те", "Такой", "Такая", "Такое", "Такие",
-            "Весь", "Вся", "Всё", "Все", "Сам", "Сама", "Само", "Сами", "Весь", "Всяческая", "Всяческие"
-        ];
-        
-        const verbs = [
-            "Быть", "Стать", "Иметь", "Делать", "Сказать", "Пойти", "Увидеть", "Подумать", "Знать", "Мочь",
-            "Хотеть", "Любить", "Жить", "Работать", "Учиться", "Играть", "Спать", "Есть", "Пить", "Гулять",
-            "Идти", "Ехать", "Лететь", "Плыть", "Бежать", "Стоять", "Сидеть", "Лежать", "Видеть", "Слышать",
-            "Чувствовать", "Понимать", "Объяснять", "Рассказывать", "Показывать", "Доказывать", "Убеждать",
-            "Сомневаться", "Надеяться", "Верить", "Любить", "Ненавидеть", "Терпеть", "Страдать", "Радоваться",
-            "Плакать", "Смеяться", "Молчать", "Кричать", "Шептать", "Дышать", "Ждать"
-        ];
-        
-        const adjectives = [
-            "Хороший", "Плохой", "Большой", "Маленький", "Быстрый", "Медленный", "Громкий", "Тихий", "Яркий", "Тёмный",
-            "Светлый", "Тёплый", "Холодный", "Мокрый", "Сухой", "Чистый", "Грязный", "Новый", "Старый", "Молодой",
-            "Весёлый", "Грустный", "Умный", "Глупый", "Красивый", "Страшный", "Сильный", "Слабый", "Богатый", "Бедный",
-            "Добрый", "Злой", "Хитрый", "Мудрый", "Простой", "Сложный", "Пустой", "Полный", "Живой", "Мёртвый"
-        ];
-        
-        const adverbs = [
-            "Быстро", "Медленно", "Громко", "Тихо", "Ярко", "Темно", "Светло", "Тепло", "Холодно", "Мокро",
-            "Сухо", "Чисто", "Грязно", "Ново", "Старо", "Весело", "Грустно", "Умно", "Глупо", "Красиво",
-            "Страшно", "Сильно", "Слабо", "Богато", "Бедно", "Хорошо", "Плохо", "Много", "Мало", "Часто",
-            "Редко", "Всегда", "Никогда", "Иногда", "Везде", "Нигде", "Тут", "Там", "Здесь", "Там"
-        ];
-        
-        const emotions = [
-            "Ура!", "Ах!", "Ох!", "Эх!", "Уф!", "Оф!", "Эй!", "Ой!", "Ай!", "Уй!",
-            "Вау!", "Ого!", "Ничего себе!", "Обалдеть!", "Офигеть!", "Нифига себе!", "Вот это да!",
-            "Не может быть!", "Да ладно!", "Серьёзно?", "Неужели?", "Правда?", "Враньё!", "Не верю!",
-            "Верю!", "Супер!", "Класс!", "Отлично!", "Здорово!", "Круто!", "Потрясающе!"
-        ];
-        
-        const curses = [
-            "Блин", "Чёрт", "Ёлки-палки", "Ёкарный бабай", "Японский городовой", "Ёжкин кот",
-            "Ёлы-палы", "Чёрт побери", "Тьфу ты", "Вот чёрт", "Чёрт возьми", "Боже мой",
-            "Господи", "О Господи", "Батюшки", "Мамочки", "Ой-ёй", "Ё-моё", "Ёпрст", "Ёклмн"
-        ];
-        
-        const absurd = [
-            "Куда делся носок?", "Где пульт?", "Кто съел печенье?", "Зачем я открыл холодильник?",
-            "Почему вода мокрая?", "Какого цвета улыбка?", "Где находится вчера?",
-            "Сколько весит облако?", "Почему трава зелёная?", "А зачем вообще всё это?",
-            "Что было раньше?", "А что потом?", "Имеет ли это смысл?", "Никакого смысла"
-        ];
-        
-        phrases.push(...russianExclamations);
-        phrases.push(...questions);
-        phrases.push(...interjections);
-        phrases.push(...fillers);
-        phrases.push(...internetPhrases);
-        phrases.push(...movieQuotes);
-        phrases.push(...onomatopoeia);
-        phrases.push(...symbols);
-        phrases.push(...everyday);
-        phrases.push(...funny);
-        phrases.push(...pronouns);
-        phrases.push(...verbs);
-        phrases.push(...adjectives);
-        phrases.push(...adverbs);
-        phrases.push(...emotions);
-        phrases.push(...curses);
-        phrases.push(...absurd);
-        
-        const withMarks = [];
-        phrases.forEach(p => {
-            if (p.length < 20 && !p.includes('?') && !p.includes('!')) {
-                withMarks.push(p + '!');
-                withMarks.push(p + '?');
-                withMarks.push(p + '!!');
-                withMarks.push(p + '?!');
-                withMarks.push(p + '...');
-            }
-        });
-        phrases.push(...withMarks);
-        
-        const upperVariants = [];
-        phrases.forEach(p => {
-            if (p.length < 15 && !p.includes('!') && !p.includes('?')) {
-                upperVariants.push(p.toUpperCase());
-                upperVariants.push(p.toUpperCase() + '!');
-            }
-        });
-        phrases.push(...upperVariants);
-        
-        const repeated = [];
-        phrases.forEach(p => {
-            if (p.length < 12) {
-                repeated.push(p + ' ' + p);
-                repeated.push(p + p);
-            }
-        });
-        phrases.push(...repeated);
-        
-        for (let i = phrases.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [phrases[i], phrases[j]] = [phrases[j], phrases[i]];
-        }
-        
-        console.log(`Сгенерировано ${phrases.length} уникальных фраз для Юпитера`);
-        return phrases;
-    }
-    
-    const jupiterPhrases = generateThousandPhrases();
-    let phraseInterval = null;
-
-    function updateJupiterPhrase() {
-        if (jupiterLabelElement) {
-            const randomIndex = Math.floor(Math.random() * jupiterPhrases.length);
-            jupiterLabelElement.textContent = jupiterPhrases[randomIndex];
-        }
-    }
-
-    function generateStars(count = 250) {
+    function generateStars(count = 220) {
         stars = [];
         for (let i = 0; i < count; i++) {
             stars.push({
                 x: Math.random(),
                 y: Math.random(),
-                size: Math.random() * 2.5 + 0.5,
-                brightness: Math.random() * 0.5 + 0.2
+                size: Math.random() * 2 + 0.5,
+                brightness: Math.random() * 0.45 + 0.2
             });
         }
-    }
-
-    function initAngles() {
-        angles = planets.map(() => Math.random() * Math.PI * 2);
-        moonAngle = Math.random() * Math.PI * 2;
     }
 
     function resizeCanvas() {
@@ -346,23 +114,27 @@
         canvas.height = window.innerHeight;
         centerX = canvas.width / 2;
         centerY = canvas.height / 2;
-        
-        const minDimension = Math.min(window.innerWidth, window.innerHeight);
-        const scaleFactor = minDimension / 1200;
-        
-        const baseOrbits = [100, 160, 220, 280, 350, 430, 500, 570];
-        planets.forEach((planet, index) => {
-            planet.orbitRadius = baseOrbits[index] * Math.max(0.8, Math.min(1.2, scaleFactor));
-        });
-        
-        moon.orbitRadius = 25 * scaleFactor;
+
+        const minDimension = Math.min(canvas.width, canvas.height);
+        verticalGap = Math.max(70, minDimension * 0.18);
+        sunRadius = Math.max(26, minDimension * 0.085);
+        moonRadius = Math.max(11, minDimension * 0.032);
+        jupiterRadius = Math.max(16, minDimension * 0.046);
+
+        // Space-around distribution for 3 planets: centers at 1/6, 3/6, 5/6 of height.
+        const step = canvas.height / 3;
+        const baseOffset = step / 2;
+
+        jupiterPosition = { x: centerX, y: baseOffset, radius: jupiterRadius };
+        moonPosition = { x: centerX, y: baseOffset + step, radius: moonRadius };
+        sunPosition = { x: centerX, y: baseOffset + step * 2, radius: sunRadius };
     }
 
     function createLabels() {
         labelsContainer.innerHTML = '';
         
         sunLabelElement = document.createElement('a');
-        sunLabelElement.href = 'https://xiersent.github.io/sun/';
+        sunLabelElement.href = planetLinks.sun;
         sunLabelElement.target = '_blank';
         sunLabelElement.rel = 'noopener noreferrer';
         sunLabelElement.className = 'label sun-label';
@@ -370,7 +142,7 @@
         labelsContainer.appendChild(sunLabelElement);
         
         moonLabelElement = document.createElement('a');
-        moonLabelElement.href = 'https://xiersent.github.io/moon/';
+        moonLabelElement.href = planetLinks.moon;
         moonLabelElement.target = '_blank';
         moonLabelElement.rel = 'noopener noreferrer';
         moonLabelElement.className = 'label moon-label';
@@ -378,117 +150,49 @@
         labelsContainer.appendChild(moonLabelElement);
 
         jupiterLabelElement = document.createElement('a');
-        jupiterLabelElement.href = 'https://cu584805.tw1.ru/';
+        jupiterLabelElement.href = planetLinks.jupiter;
         jupiterLabelElement.target = '_blank';
         jupiterLabelElement.rel = 'noopener noreferrer';
         jupiterLabelElement.className = 'label jupiter-label';
-        jupiterLabelElement.textContent = jupiterPhrases[0];
+        jupiterLabelElement.textContent = 'JUPITER';
         labelsContainer.appendChild(jupiterLabelElement);
-
-        if (phraseInterval) clearInterval(phraseInterval);
-        phraseInterval = setInterval(updateJupiterPhrase, 2000);
     }
 
     function updateLabels() {
+        const labelGap = 8;
+        const sunLabelOffset = sunPosition.radius + labelGap;
+        const moonLabelOffset = moonPosition.radius + labelGap;
+        const jupiterLabelOffset = jupiterPosition.radius + labelGap;
+
         if (sunLabelElement && sunPosition.x && sunPosition.y) {
             sunLabelElement.style.left = sunPosition.x + 'px';
-            sunLabelElement.style.top = sunPosition.y + 'px';
+            sunLabelElement.style.top = (sunPosition.y - sunLabelOffset) + 'px';
         }
         
         if (moonLabelElement && moonPosition.x && moonPosition.y) {
             moonLabelElement.style.left = moonPosition.x + 'px';
-            moonLabelElement.style.top = moonPosition.y + 'px';
+            moonLabelElement.style.top = (moonPosition.y - moonLabelOffset) + 'px';
         }
 
         if (jupiterLabelElement && jupiterPosition.x && jupiterPosition.y) {
             jupiterLabelElement.style.left = jupiterPosition.x + 'px';
-            jupiterLabelElement.style.top = jupiterPosition.y + 'px';
+            jupiterLabelElement.style.top = (jupiterPosition.y - jupiterLabelOffset) + 'px';
         }
     }
 
-    function drawPlanet(x, y, color, size, name, isMoon = false) {
+    function drawPlanet(x, y, color, size, glowColor) {
         ctx.beginPath();
         ctx.fillStyle = color;
-        
-        if (isMoon) {
-            ctx.shadowColor = 'rgba(255, 255, 255, 0.1)';
-            ctx.shadowBlur = 10;
-        } else {
-            ctx.shadowColor = 'rgba(255, 255, 255, 0.2)';
-            ctx.shadowBlur = 18;
-        }
-        
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = size * 1.8;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
 
         ctx.arc(x, y, size, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-
-        if (name === 'Сатурн' && !isMoon) {
-            ctx.beginPath();
-            ctx.strokeStyle = '#d9c8b8';
-            ctx.lineWidth = 1.5;
-            ctx.setLineDash([3, 4]);
-            ctx.ellipse(x, y, size * 1.8, size * 0.7, 0, 0, Math.PI * 2);
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.strokeStyle = '#c9b5a2';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([4, 5]);
-            ctx.ellipse(x, y, size * 2.1, size * 0.9, 0, 0, Math.PI * 2);
-            ctx.stroke();
-
-            ctx.setLineDash([]);
-        }
-    }
-
-    function drawOrbit(radius) {
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(210, 220, 240, 0.25)';
-        ctx.lineWidth = 1.0;
-        ctx.setLineDash([7, 9]);
-        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-    }
-
-    function drawMoonOrbit(earthX, earthY, radius) {
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(200, 210, 230, 0.15)';
-        ctx.lineWidth = 0.8;
-        ctx.setLineDash([4, 5]);
-        ctx.arc(earthX, earthY, radius, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-    }
-
-    function drawSun() {
-        ctx.shadowColor = '#f2d53c';
-        ctx.shadowBlur = 60;
-
-        ctx.fillStyle = '#e8c35c';
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 38, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.shadowColor = '#dbb042';
-        ctx.shadowBlur = 80;
-
-        ctx.fillStyle = '#f5d371';
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 30, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
-        
-        sunPosition = { x: centerX, y: centerY };
     }
 
     function drawBackgroundStars() {
@@ -511,72 +215,67 @@
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         drawBackgroundStars();
-        drawSun();
-
-        planets.forEach(planet => {
-            drawOrbit(planet.orbitRadius);
-        });
-
-        for (let i = 0; i < planets.length; i++) {
-            angles[i] -= planets[i].speed;
-        }
-        moonAngle -= moon.speed;
-
-        const earthIndex = 2;
-        const earthX = centerX + Math.cos(angles[earthIndex]) * planets[earthIndex].orbitRadius;
-        const earthY = centerY + Math.sin(angles[earthIndex]) * planets[earthIndex].orbitRadius;
-
-        const jupiterIndex = 4;
-        const jupiterX = centerX + Math.cos(angles[jupiterIndex]) * planets[jupiterIndex].orbitRadius;
-        const jupiterY = centerY + Math.sin(angles[jupiterIndex]) * planets[jupiterIndex].orbitRadius;
-        jupiterPosition = { x: jupiterX, y: jupiterY };
-
-        drawMoonOrbit(earthX, earthY, moon.orbitRadius);
-
-        for (let i = 0; i < planets.length; i++) {
-            if (i === earthIndex) continue;
-            
-            const planet = planets[i];
-            const x = centerX + Math.cos(angles[i]) * planet.orbitRadius;
-            const y = centerY + Math.sin(angles[i]) * planet.orbitRadius;
-            drawPlanet(x, y, planet.color, planet.size, planet.name);
-        }
-
-        const moonX = earthX + Math.cos(moonAngle) * moon.orbitRadius;
-        const moonY = earthY + Math.sin(moonAngle) * moon.orbitRadius;
-        moonPosition = { x: moonX, y: moonY };
-        drawPlanet(moonX, moonY, moon.color, moon.size, moon.name, true);
-
-        const earth = planets[earthIndex];
-        drawPlanet(earthX, earthY, earth.color, earth.size, earth.name);
+        drawPlanet(jupiterPosition.x, jupiterPosition.y, '#c0a89c', jupiterPosition.radius, 'rgba(255, 225, 180, 0.3)');
+        drawPlanet(moonPosition.x, moonPosition.y, '#c0c5c9', moonPosition.radius, 'rgba(255, 255, 255, 0.3)');
+        drawPlanet(sunPosition.x, sunPosition.y, '#f5d371', sunPosition.radius, 'rgba(245, 211, 113, 0.55)');
 
         updateLabels();
-
-        requestAnimationFrame(animate);
     }
 
-    window.addEventListener('beforeunload', () => {
-        if (phraseInterval) {
-            clearInterval(phraseInterval);
-            phraseInterval = null;
+    function getPlanetLinkAtPosition(x, y) {
+        const targets = [
+            { ...jupiterPosition, href: planetLinks.jupiter },
+            { ...moonPosition, href: planetLinks.moon },
+            { ...sunPosition, href: planetLinks.sun }
+        ];
+
+        for (const target of targets) {
+            const dx = x - target.x;
+            const dy = y - target.y;
+            if (Math.hypot(dx, dy) <= target.radius) {
+                return target.href;
+            }
         }
-    });
+
+        return null;
+    }
+
+    function getCanvasPoint(event) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top
+        };
+    }
 
     resizeCanvas();
-    generateStars(350);
-    initAngles();
+    generateStars();
     createLabels();
+    animate();
     
     window.addEventListener('resize', () => {
         resizeCanvas();
+        animate();
         updateLabels();
+    });
+
+    canvas.addEventListener('click', (event) => {
+        const point = getCanvasPoint(event);
+        const targetLink = getPlanetLinkAtPosition(point.x, point.y);
+        if (targetLink) {
+            window.open(targetLink, '_blank', 'noopener,noreferrer');
+        }
+    });
+
+    canvas.addEventListener('mousemove', (event) => {
+        const point = getCanvasPoint(event);
+        const targetLink = getPlanetLinkAtPosition(point.x, point.y);
+        canvas.style.cursor = targetLink ? 'pointer' : 'default';
     });
 
     window.addEventListener('load', () => {
         setTimeout(updateLabels, 50);
     });
-
-    animate();
 </script>
 </body>
 </html>
