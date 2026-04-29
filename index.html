@@ -383,7 +383,7 @@
         jupiterLabelElement.rel = 'noopener noreferrer';
         jupiterLabelElement.className = 'label jupiter-label';
         jupiterLabelElement.textContent = jupiterPhrases[0];
-        //labelsContainer.appendChild(jupiterLabelElement);
+        labelsContainer.appendChild(jupiterLabelElement);
 
         if (phraseInterval) clearInterval(phraseInterval);
         phraseInterval = setInterval(updateJupiterPhrase, 2000);
