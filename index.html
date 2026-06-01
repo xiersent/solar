@@ -50,7 +50,7 @@
             pointer-events: auto;
             cursor: pointer;
             z-index: 3;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -100%);
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
         }
 
@@ -65,6 +65,16 @@
 
         .label.jupiter-label {
             color: white;
+        }
+
+        .planet-hit {
+            position: absolute;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: auto;
+            cursor: pointer;
+            z-index: 2;
+            background: transparent;
         }
     </style>
 </head>
@@ -96,6 +106,9 @@
     let sunLabelElement = null;
     let moonLabelElement = null;
     let jupiterLabelElement = null;
+    let sunHitElement = null;
+    let moonHitElement = null;
+    let jupiterHitElement = null;
 
     function generateStars(count = 220) {
         stars = [];
@@ -130,8 +143,23 @@
         sunPosition = { x: centerX, y: baseOffset + step * 2, radius: sunRadius };
     }
 
+    function createPlanetHit(className, href, ariaLabel) {
+        const link = document.createElement('a');
+        link.href = href;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.className = 'planet-hit ' + className;
+        link.setAttribute('aria-label', ariaLabel);
+        labelsContainer.appendChild(link);
+        return link;
+    }
+
     function createLabels() {
         labelsContainer.innerHTML = '';
+
+        sunHitElement = createPlanetHit('sun-hit', planetLinks.sun, 'Sun');
+        moonHitElement = createPlanetHit('moon-hit', planetLinks.moon, 'Moon');
+        jupiterHitElement = createPlanetHit('jupiter-hit', planetLinks.jupiter, 'Jupiter');
         
         sunLabelElement = document.createElement('a');
         sunLabelElement.href = planetLinks.sun;
@@ -158,25 +186,43 @@
         labelsContainer.appendChild(jupiterLabelElement);
     }
 
-    function updateLabels() {
-        const labelGap = 8;
-        const sunLabelOffset = sunPosition.radius + labelGap;
-        const moonLabelOffset = moonPosition.radius + labelGap;
-        const jupiterLabelOffset = jupiterPosition.radius + labelGap;
+    function updatePlanetHit(hitElement, position, glowMultiplier = 2.2) {
+        if (!hitElement || !position.radius) {
+            return;
+        }
 
-        if (sunLabelElement && sunPosition.x && sunPosition.y) {
+        const hitSize = position.radius * glowMultiplier;
+        hitElement.style.left = position.x + 'px';
+        hitElement.style.top = position.y + 'px';
+        hitElement.style.width = hitSize + 'px';
+        hitElement.style.height = hitSize + 'px';
+    }
+
+    function getLabelTop(position) {
+        const minDimension = Math.min(canvas.width, canvas.height);
+        const labelGap = Math.max(6, minDimension * 0.01);
+        const glowPadding = position.radius * 0.2;
+        return position.y - position.radius - glowPadding - labelGap;
+    }
+
+    function updateLabels() {
+        updatePlanetHit(sunHitElement, sunPosition);
+        updatePlanetHit(moonHitElement, moonPosition);
+        updatePlanetHit(jupiterHitElement, jupiterPosition);
+
+        if (sunLabelElement && sunPosition.radius) {
             sunLabelElement.style.left = sunPosition.x + 'px';
-            sunLabelElement.style.top = (sunPosition.y - sunLabelOffset) + 'px';
+            sunLabelElement.style.top = getLabelTop(sunPosition) + 'px';
         }
         
-        if (moonLabelElement && moonPosition.x && moonPosition.y) {
+        if (moonLabelElement && moonPosition.radius) {
             moonLabelElement.style.left = moonPosition.x + 'px';
-            moonLabelElement.style.top = (moonPosition.y - moonLabelOffset) + 'px';
+            moonLabelElement.style.top = getLabelTop(moonPosition) + 'px';
         }
 
-        if (jupiterLabelElement && jupiterPosition.x && jupiterPosition.y) {
+        if (jupiterLabelElement && jupiterPosition.radius) {
             jupiterLabelElement.style.left = jupiterPosition.x + 'px';
-            jupiterLabelElement.style.top = (jupiterPosition.y - jupiterLabelOffset) + 'px';
+            jupiterLabelElement.style.top = getLabelTop(jupiterPosition) + 'px';
         }
     }
 
@@ -222,32 +268,6 @@
         updateLabels();
     }
 
-    function getPlanetLinkAtPosition(x, y) {
-        const targets = [
-            { ...jupiterPosition, href: planetLinks.jupiter },
-            { ...moonPosition, href: planetLinks.moon },
-            { ...sunPosition, href: planetLinks.sun }
-        ];
-
-        for (const target of targets) {
-            const dx = x - target.x;
-            const dy = y - target.y;
-            if (Math.hypot(dx, dy) <= target.radius) {
-                return target.href;
-            }
-        }
-
-        return null;
-    }
-
-    function getCanvasPoint(event) {
-        const rect = canvas.getBoundingClientRect();
-        return {
-            x: event.clientX - rect.left,
-            y: event.clientY - rect.top
-        };
-    }
-
     resizeCanvas();
     generateStars();
     createLabels();
@@ -257,20 +277,6 @@
         resizeCanvas();
         animate();
         updateLabels();
-    });
-
-    canvas.addEventListener('click', (event) => {
-        const point = getCanvasPoint(event);
-        const targetLink = getPlanetLinkAtPosition(point.x, point.y);
-        if (targetLink) {
-            window.open(targetLink, '_blank', 'noopener,noreferrer');
-        }
-    });
-
-    canvas.addEventListener('mousemove', (event) => {
-        const point = getCanvasPoint(event);
-        const targetLink = getPlanetLinkAtPosition(point.x, point.y);
-        canvas.style.cursor = targetLink ? 'pointer' : 'default';
     });
 
     window.addEventListener('load', () => {
