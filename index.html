@@ -67,6 +67,10 @@
             color: white;
         }
 
+        .label.venus-label {
+            color: #f5e6c8;
+        }
+
         .planet-hit {
             position: absolute;
             border-radius: 50%;
@@ -92,21 +96,35 @@
     let centerY;
     let verticalGap;
     let sunRadius;
+    let venusRadius;
     let moonRadius;
     let jupiterRadius;
     let stars = [];
     let sunPosition = { x: 0, y: 0, radius: 0 };
+    let venusPosition = { x: 0, y: 0, radius: 0 };
     let moonPosition = { x: 0, y: 0, radius: 0 };
     let jupiterPosition = { x: 0, y: 0, radius: 0 };
+
+    /** Расстояния от Солнца в а.е. (Луна — условно зона Земли ~1 а.е.). */
+    const ORBIT_AU = {
+        venus: 0.72,
+        moon: 1,
+        jupiter: 5.2
+    };
+    const MAX_ORBIT_AU = ORBIT_AU.jupiter;
+
     const planetLinks = {
         sun: 'https://xiersent.github.io/sun/',
+        venus: 'https://xiersent.github.io/venus/',
         moon: 'https://xiersent.github.io/moon/',
         jupiter: 'https://cu584805.tw1.ru/'
     };
     let sunLabelElement = null;
+    let venusLabelElement = null;
     let moonLabelElement = null;
     let jupiterLabelElement = null;
     let sunHitElement = null;
+    let venusHitElement = null;
     let moonHitElement = null;
     let jupiterHitElement = null;
 
@@ -131,16 +149,37 @@
         const minDimension = Math.min(canvas.width, canvas.height);
         verticalGap = Math.max(70, minDimension * 0.18);
         sunRadius = Math.max(26, minDimension * 0.085);
+        venusRadius = Math.max(13, minDimension * 0.036);
         moonRadius = Math.max(11, minDimension * 0.032);
         jupiterRadius = Math.max(16, minDimension * 0.046);
 
-        // Space-around distribution for 3 planets: centers at 1/6, 3/6, 5/6 of height.
-        const step = canvas.height / 3;
-        const baseOffset = step / 2;
+        // Равномерное распределение четырёх объектов по высоте экрана.
+        const topMargin = Math.max(verticalGap, minDimension * 0.16);
+        const bottomMargin = canvas.height - Math.max(verticalGap, sunRadius * 2.1);
+        const usableHeight = Math.max(bottomMargin - topMargin, minDimension * 0.4);
+        const step = usableHeight / 3; // 4 планеты → 3 промежутка
 
-        jupiterPosition = { x: centerX, y: baseOffset, radius: jupiterRadius };
-        moonPosition = { x: centerX, y: baseOffset + step, radius: moonRadius };
-        sunPosition = { x: centerX, y: baseOffset + step * 2, radius: sunRadius };
+        // Снизу вверх: Sun, Venus, Moon, Jupiter.
+        sunPosition = {
+            x: centerX,
+            y: bottomMargin,
+            radius: sunRadius,
+        };
+        venusPosition = {
+            x: centerX,
+            y: bottomMargin - step,
+            radius: venusRadius,
+        };
+        moonPosition = {
+            x: centerX,
+            y: bottomMargin - step * 2,
+            radius: moonRadius,
+        };
+        jupiterPosition = {
+            x: centerX,
+            y: bottomMargin - step * 3,
+            radius: jupiterRadius,
+        };
     }
 
     function createPlanetHit(className, href, ariaLabel) {
@@ -158,6 +197,7 @@
         labelsContainer.innerHTML = '';
 
         sunHitElement = createPlanetHit('sun-hit', planetLinks.sun, 'Sun');
+        venusHitElement = createPlanetHit('venus-hit', planetLinks.venus, 'Venus');
         moonHitElement = createPlanetHit('moon-hit', planetLinks.moon, 'Moon');
         jupiterHitElement = createPlanetHit('jupiter-hit', planetLinks.jupiter, 'Jupiter');
         
@@ -168,6 +208,14 @@
         sunLabelElement.className = 'label sun-label';
         sunLabelElement.textContent = 'SUN';
         labelsContainer.appendChild(sunLabelElement);
+
+        venusLabelElement = document.createElement('a');
+        venusLabelElement.href = planetLinks.venus;
+        venusLabelElement.target = '_blank';
+        venusLabelElement.rel = 'noopener noreferrer';
+        venusLabelElement.className = 'label venus-label';
+        venusLabelElement.textContent = 'VENUS';
+        labelsContainer.appendChild(venusLabelElement);
         
         moonLabelElement = document.createElement('a');
         moonLabelElement.href = planetLinks.moon;
@@ -207,12 +255,18 @@
 
     function updateLabels() {
         updatePlanetHit(sunHitElement, sunPosition);
+        updatePlanetHit(venusHitElement, venusPosition);
         updatePlanetHit(moonHitElement, moonPosition);
         updatePlanetHit(jupiterHitElement, jupiterPosition);
 
         if (sunLabelElement && sunPosition.radius) {
             sunLabelElement.style.left = sunPosition.x + 'px';
             sunLabelElement.style.top = getLabelTop(sunPosition) + 'px';
+        }
+
+        if (venusLabelElement && venusPosition.radius) {
+            venusLabelElement.style.left = venusPosition.x + 'px';
+            venusLabelElement.style.top = getLabelTop(venusPosition) + 'px';
         }
         
         if (moonLabelElement && moonPosition.radius) {
@@ -263,6 +317,7 @@
         drawBackgroundStars();
         drawPlanet(jupiterPosition.x, jupiterPosition.y, '#c0a89c', jupiterPosition.radius, 'rgba(255, 225, 180, 0.3)');
         drawPlanet(moonPosition.x, moonPosition.y, '#c0c5c9', moonPosition.radius, 'rgba(255, 255, 255, 0.3)');
+        drawPlanet(venusPosition.x, venusPosition.y, '#e8cda8', venusPosition.radius, 'rgba(255, 220, 160, 0.35)');
         drawPlanet(sunPosition.x, sunPosition.y, '#f5d371', sunPosition.radius, 'rgba(245, 211, 113, 0.55)');
 
         updateLabels();
