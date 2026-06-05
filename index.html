@@ -54,6 +54,10 @@
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
         }
 
+        .label.label--below {
+            transform: translate(-50%, 0);
+        }
+
         .label.sun-label {
             color: white;
             font-size: clamp(16px, 3.4vw, 24px);
@@ -94,7 +98,6 @@
 
     let centerX;
     let centerY;
-    let verticalGap;
     let sunRadius;
     let venusRadius;
     let moonRadius;
@@ -127,17 +130,49 @@
     let venusHitElement = null;
     let moonHitElement = null;
     let jupiterHitElement = null;
+    let hitGlowMultiplier = 2.2;
+    let labelHeightEstimate = 22;
 
-    function generateStars(count = 220) {
-        stars = [];
-        for (let i = 0; i < count; i++) {
-            stars.push({
-                x: Math.random(),
-                y: Math.random(),
-                size: Math.random() * 2 + 0.5,
-                brightness: Math.random() * 0.45 + 0.2
-            });
+    function getHitGlowMultiplier() {
+        if (canvas.height < 560) {
+            return 1.85;
         }
+        if (canvas.height < 720) {
+            return 2;
+        }
+        return 2.2;
+    }
+
+    /** Верхний/нижний запас под подпись и зону нажатия. */
+    function getPlanetVerticalPadding(radius) {
+        const hitHalf = radius * hitGlowMultiplier * 0.5;
+        const glowPad = radius * 0.2;
+        return {
+            above: radius + glowPad + labelHeightEstimate + 8,
+            below: Math.max(radius + hitHalf, radius + glowPad) + 8,
+        };
+    }
+
+    function layoutPlanetColumn(positions) {
+        let topPad = 12;
+        let bottomPad = 12;
+
+        positions.forEach((item) => {
+            const pad = getPlanetVerticalPadding(item.radius);
+            topPad = Math.max(topPad, pad.above);
+            bottomPad = Math.max(bottomPad, pad.below);
+        });
+
+        const yMin = topPad;
+        const yMax = canvas.height - bottomPad;
+        const span = Math.max(yMax - yMin, 1);
+        const step = span / (positions.length - 1);
+
+        positions.forEach((item, index) => {
+            item.position.x = centerX;
+            item.position.y = yMax - step * index;
+            item.position.radius = item.radius;
+        });
     }
 
     function resizeCanvas() {
@@ -147,39 +182,22 @@
         centerY = canvas.height / 2;
 
         const minDimension = Math.min(canvas.width, canvas.height);
-        verticalGap = Math.max(70, minDimension * 0.18);
-        sunRadius = Math.max(26, minDimension * 0.085);
-        venusRadius = Math.max(13, minDimension * 0.036);
-        moonRadius = Math.max(11, minDimension * 0.032);
-        jupiterRadius = Math.max(16, minDimension * 0.046);
+        const heightScale = canvas.height < 640 ? Math.max(0.78, canvas.height / 640) : 1;
 
-        // Равномерное распределение четырёх объектов по высоте экрана.
-        const topMargin = Math.max(verticalGap, minDimension * 0.16);
-        const bottomMargin = canvas.height - Math.max(verticalGap, sunRadius * 2.1);
-        const usableHeight = Math.max(bottomMargin - topMargin, minDimension * 0.4);
-        const step = usableHeight / 3; // 4 планеты → 3 промежутка
+        hitGlowMultiplier = getHitGlowMultiplier();
+        labelHeightEstimate = Math.max(16, minDimension * 0.042);
 
-        // Снизу вверх: Sun, Venus, Moon, Jupiter.
-        sunPosition = {
-            x: centerX,
-            y: bottomMargin,
-            radius: sunRadius,
-        };
-        venusPosition = {
-            x: centerX,
-            y: bottomMargin - step,
-            radius: venusRadius,
-        };
-        moonPosition = {
-            x: centerX,
-            y: bottomMargin - step * 2,
-            radius: moonRadius,
-        };
-        jupiterPosition = {
-            x: centerX,
-            y: bottomMargin - step * 3,
-            radius: jupiterRadius,
-        };
+        sunRadius = Math.max(22, minDimension * 0.085 * heightScale);
+        venusRadius = Math.max(11, minDimension * 0.036 * heightScale);
+        moonRadius = Math.max(10, minDimension * 0.032 * heightScale);
+        jupiterRadius = Math.max(14, minDimension * 0.046 * heightScale);
+
+        layoutPlanetColumn([
+            { position: sunPosition, radius: sunRadius },
+            { position: venusPosition, radius: venusRadius },
+            { position: moonPosition, radius: moonRadius },
+            { position: jupiterPosition, radius: jupiterRadius },
+        ]);
     }
 
     function createPlanetHit(className, href, ariaLabel) {
@@ -234,23 +252,56 @@
         labelsContainer.appendChild(jupiterLabelElement);
     }
 
-    function updatePlanetHit(hitElement, position, glowMultiplier = 2.2) {
+    function generateStars(count = 220) {
+        stars = [];
+        for (let i = 0; i < count; i++) {
+            stars.push({
+                x: Math.random(),
+                y: Math.random(),
+                size: Math.random() * 2 + 0.5,
+                brightness: Math.random() * 0.45 + 0.2
+            });
+        }
+    }
+
+    function updatePlanetHit(hitElement, position) {
         if (!hitElement || !position.radius) {
             return;
         }
 
-        const hitSize = position.radius * glowMultiplier;
+        const hitSize = position.radius * hitGlowMultiplier;
         hitElement.style.left = position.x + 'px';
         hitElement.style.top = position.y + 'px';
         hitElement.style.width = hitSize + 'px';
         hitElement.style.height = hitSize + 'px';
     }
 
-    function getLabelTop(position) {
+    function getLabelLayout(position) {
         const minDimension = Math.min(canvas.width, canvas.height);
         const labelGap = Math.max(6, minDimension * 0.01);
         const glowPadding = position.radius * 0.2;
-        return position.y - position.radius - glowPadding - labelGap;
+        const aboveTop = position.y - position.radius - glowPadding - labelGap;
+        const minTop = labelHeightEstimate + 6;
+
+        if (aboveTop >= minTop) {
+            return { top: aboveTop, below: false };
+        }
+
+        return {
+            top: position.y + position.radius + glowPadding + labelGap,
+            below: true,
+        };
+    }
+
+    function updateLabelElement(labelElement, position) {
+        if (!labelElement || !position.radius) {
+            return;
+        }
+
+        const layout = getLabelLayout(position);
+        labelElement.style.left = position.x + 'px';
+        labelElement.style.top = layout.top + 'px';
+        labelElement.classList.toggle('label--below', layout.below);
     }
 
     function updateLabels() {
@@ -259,25 +310,10 @@
         updatePlanetHit(moonHitElement, moonPosition);
         updatePlanetHit(jupiterHitElement, jupiterPosition);
 
-        if (sunLabelElement && sunPosition.radius) {
-            sunLabelElement.style.left = sunPosition.x + 'px';
-            sunLabelElement.style.top = getLabelTop(sunPosition) + 'px';
-        }
-
-        if (venusLabelElement && venusPosition.radius) {
-            venusLabelElement.style.left = venusPosition.x + 'px';
-            venusLabelElement.style.top = getLabelTop(venusPosition) + 'px';
-        }
-        
-        if (moonLabelElement && moonPosition.radius) {
-            moonLabelElement.style.left = moonPosition.x + 'px';
-            moonLabelElement.style.top = getLabelTop(moonPosition) + 'px';
-        }
-
-        if (jupiterLabelElement && jupiterPosition.radius) {
-            jupiterLabelElement.style.left = jupiterPosition.x + 'px';
-            jupiterLabelElement.style.top = getLabelTop(jupiterPosition) + 'px';
-        }
+        updateLabelElement(sunLabelElement, sunPosition);
+        updateLabelElement(venusLabelElement, venusPosition);
+        updateLabelElement(moonLabelElement, moonPosition);
+        updateLabelElement(jupiterLabelElement, jupiterPosition);
     }
 
     function drawPlanet(x, y, color, size, glowColor) {
