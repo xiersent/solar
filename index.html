@@ -18,239 +18,154 @@
             font-family: 'Arial', sans-serif;
         }
 
-        canvas {
-            display: block;
-            width: 100vw;
-            height: 100vh;
-            background: radial-gradient(circle at center, #1a2645 0%, #070711 100%);
-            object-fit: cover;
+        .solar-scene {
             position: fixed;
-            top: 0;
-            left: 0;
+            inset: 0;
+        }
+
+        #solarCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            inset: 0;
             z-index: 1;
         }
 
-        #labels-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
+        .solar-map {
+            position: relative;
             z-index: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            height: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: clamp(10px, 3vh, 28px) 16px;
+            pointer-events: none;
         }
 
-        .label {
-            position: absolute;
-            color: white;
-            font-size: clamp(14px, 2.7vw, 20px);
-            font-weight: 600;
+        .solar-planet {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(4px, 1vh, 10px);
+            flex: 1 1 0;
+            min-height: 0;
+            width: 100%;
+            max-width: 120px;
             text-decoration: none;
-            white-space: nowrap;
             pointer-events: auto;
             cursor: pointer;
-            z-index: 3;
-            transform: translate(-50%, -100%);
+        }
+
+        .solar-planet__label {
+            color: #fff;
+            font-size: clamp(14px, 2.7vw, 20px);
+            font-weight: 600;
+            white-space: nowrap;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+            line-height: 1.1;
         }
 
-        .label.label--below {
-            transform: translate(-50%, 0);
-        }
-
-        .label.sun-label {
-            color: white;
-            font-size: clamp(16px, 3.4vw, 24px);
-        }
-
-        .label.moon-label {
-            color: white;
-        }
-
-        .label.jupiter-label {
-            color: white;
-        }
-
-        .label.venus-label {
+        .solar-planet--venus .solar-planet__label {
             color: #f5e6c8;
         }
 
-        .planet-hit {
-            position: absolute;
+        .solar-planet--sun .solar-planet__label {
+            font-size: clamp(16px, 3.4vw, 24px);
+        }
+
+        .solar-planet__sphere {
+            display: block;
             border-radius: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: auto;
-            cursor: pointer;
-            z-index: 2;
-            background: transparent;
+            flex-shrink: 0;
+        }
+
+        .solar-planet--jupiter .solar-planet__sphere {
+            width: clamp(28px, 9vw, 44px);
+            height: clamp(28px, 9vw, 44px);
+            background: #c0a89c;
+            box-shadow: 0 0 clamp(12px, 4vw, 24px) rgba(255, 225, 180, 0.35);
+        }
+
+        .solar-planet--moon .solar-planet__sphere {
+            width: clamp(22px, 7vw, 36px);
+            height: clamp(22px, 7vw, 36px);
+            background: #c0c5c9;
+            box-shadow: 0 0 clamp(10px, 3.5vw, 20px) rgba(255, 255, 255, 0.3);
+        }
+
+        .solar-planet--venus .solar-planet__sphere {
+            width: clamp(24px, 7.5vw, 38px);
+            height: clamp(24px, 7.5vw, 38px);
+            background: #e8cda8;
+            box-shadow: 0 0 clamp(11px, 3.8vw, 22px) rgba(255, 220, 160, 0.35);
+        }
+
+        .solar-planet--sun .solar-planet__sphere {
+            width: clamp(44px, 17vw, 72px);
+            height: clamp(44px, 17vw, 72px);
+            background: #f5d371;
+            box-shadow: 0 0 clamp(18px, 6vw, 36px) rgba(245, 211, 113, 0.55);
         }
     </style>
 </head>
 <body>
-    <canvas id="solarCanvas"></canvas>
-    
-    <div id="labels-container"></div>
+    <div class="solar-scene">
+        <canvas id="solarCanvas" aria-hidden="true"></canvas>
+
+        <nav class="solar-map" aria-label="Карта системы">
+            <a
+                class="solar-planet solar-planet--jupiter"
+                href="https://cu584805.tw1.ru/"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                <span class="solar-planet__label">JUPITER</span>
+                <span class="solar-planet__sphere" aria-hidden="true"></span>
+            </a>
+
+            <a
+                class="solar-planet solar-planet--moon"
+                href="https://xiersent.github.io/moon/"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                <span class="solar-planet__label">MOON</span>
+                <span class="solar-planet__sphere" aria-hidden="true"></span>
+            </a>
+
+            <a
+                class="solar-planet solar-planet--venus"
+                href="https://xiersent.github.io/venus/"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                <span class="solar-planet__label">VENUS</span>
+                <span class="solar-planet__sphere" aria-hidden="true"></span>
+            </a>
+
+            <a
+                class="solar-planet solar-planet--sun"
+                href="https://xiersent.github.io/sun/"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                <span class="solar-planet__label">SUN</span>
+                <span class="solar-planet__sphere" aria-hidden="true"></span>
+            </a>
+        </nav>
+    </div>
 
 <script>
     const canvas = document.getElementById('solarCanvas');
     const ctx = canvas.getContext('2d');
-    const labelsContainer = document.getElementById('labels-container');
-
-    let centerX;
-    let centerY;
-    let sunRadius;
-    let venusRadius;
-    let moonRadius;
-    let jupiterRadius;
     let stars = [];
-    let sunPosition = { x: 0, y: 0, radius: 0 };
-    let venusPosition = { x: 0, y: 0, radius: 0 };
-    let moonPosition = { x: 0, y: 0, radius: 0 };
-    let jupiterPosition = { x: 0, y: 0, radius: 0 };
-
-    /** Расстояния от Солнца в а.е. (Луна — условно зона Земли ~1 а.е.). */
-    const ORBIT_AU = {
-        venus: 0.72,
-        moon: 1,
-        jupiter: 5.2
-    };
-    const MAX_ORBIT_AU = ORBIT_AU.jupiter;
-
-    const planetLinks = {
-        sun: 'https://xiersent.github.io/sun/',
-        venus: 'https://xiersent.github.io/venus/',
-        moon: 'https://xiersent.github.io/moon/',
-        jupiter: 'https://cu584805.tw1.ru/'
-    };
-    let sunLabelElement = null;
-    let venusLabelElement = null;
-    let moonLabelElement = null;
-    let jupiterLabelElement = null;
-    let sunHitElement = null;
-    let venusHitElement = null;
-    let moonHitElement = null;
-    let jupiterHitElement = null;
-    let hitGlowMultiplier = 2.2;
-    let labelHeightEstimate = 22;
-
-    function getHitGlowMultiplier() {
-        if (canvas.height < 560) {
-            return 1.85;
-        }
-        if (canvas.height < 720) {
-            return 2;
-        }
-        return 2.2;
-    }
-
-    /** Верхний/нижний запас под подпись и зону нажатия. */
-    function getPlanetVerticalPadding(radius) {
-        const hitHalf = radius * hitGlowMultiplier * 0.5;
-        const glowPad = radius * 0.2;
-        return {
-            above: radius + glowPad + labelHeightEstimate + 8,
-            below: Math.max(radius + hitHalf, radius + glowPad) + 8,
-        };
-    }
-
-    function layoutPlanetColumn(positions) {
-        let topPad = 12;
-        let bottomPad = 12;
-
-        positions.forEach((item) => {
-            const pad = getPlanetVerticalPadding(item.radius);
-            topPad = Math.max(topPad, pad.above);
-            bottomPad = Math.max(bottomPad, pad.below);
-        });
-
-        const yMin = topPad;
-        const yMax = canvas.height - bottomPad;
-        const span = Math.max(yMax - yMin, 1);
-        const step = span / (positions.length - 1);
-
-        positions.forEach((item, index) => {
-            item.position.x = centerX;
-            item.position.y = yMax - step * index;
-            item.position.radius = item.radius;
-        });
-    }
-
-    function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        centerX = canvas.width / 2;
-        centerY = canvas.height / 2;
-
-        const minDimension = Math.min(canvas.width, canvas.height);
-        const heightScale = canvas.height < 640 ? Math.max(0.78, canvas.height / 640) : 1;
-
-        hitGlowMultiplier = getHitGlowMultiplier();
-        labelHeightEstimate = Math.max(16, minDimension * 0.042);
-
-        sunRadius = Math.max(22, minDimension * 0.085 * heightScale);
-        venusRadius = Math.max(11, minDimension * 0.036 * heightScale);
-        moonRadius = Math.max(10, minDimension * 0.032 * heightScale);
-        jupiterRadius = Math.max(14, minDimension * 0.046 * heightScale);
-
-        layoutPlanetColumn([
-            { position: sunPosition, radius: sunRadius },
-            { position: venusPosition, radius: venusRadius },
-            { position: moonPosition, radius: moonRadius },
-            { position: jupiterPosition, radius: jupiterRadius },
-        ]);
-    }
-
-    function createPlanetHit(className, href, ariaLabel) {
-        const link = document.createElement('a');
-        link.href = href;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.className = 'planet-hit ' + className;
-        link.setAttribute('aria-label', ariaLabel);
-        labelsContainer.appendChild(link);
-        return link;
-    }
-
-    function createLabels() {
-        labelsContainer.innerHTML = '';
-
-        sunHitElement = createPlanetHit('sun-hit', planetLinks.sun, 'Sun');
-        venusHitElement = createPlanetHit('venus-hit', planetLinks.venus, 'Venus');
-        moonHitElement = createPlanetHit('moon-hit', planetLinks.moon, 'Moon');
-        jupiterHitElement = createPlanetHit('jupiter-hit', planetLinks.jupiter, 'Jupiter');
-        
-        sunLabelElement = document.createElement('a');
-        sunLabelElement.href = planetLinks.sun;
-        sunLabelElement.target = '_blank';
-        sunLabelElement.rel = 'noopener noreferrer';
-        sunLabelElement.className = 'label sun-label';
-        sunLabelElement.textContent = 'SUN';
-        labelsContainer.appendChild(sunLabelElement);
-
-        venusLabelElement = document.createElement('a');
-        venusLabelElement.href = planetLinks.venus;
-        venusLabelElement.target = '_blank';
-        venusLabelElement.rel = 'noopener noreferrer';
-        venusLabelElement.className = 'label venus-label';
-        venusLabelElement.textContent = 'VENUS';
-        labelsContainer.appendChild(venusLabelElement);
-        
-        moonLabelElement = document.createElement('a');
-        moonLabelElement.href = planetLinks.moon;
-        moonLabelElement.target = '_blank';
-        moonLabelElement.rel = 'noopener noreferrer';
-        moonLabelElement.className = 'label moon-label';
-        moonLabelElement.textContent = 'MOON';
-        labelsContainer.appendChild(moonLabelElement);
-
-        jupiterLabelElement = document.createElement('a');
-        jupiterLabelElement.href = planetLinks.jupiter;
-        jupiterLabelElement.target = '_blank';
-        jupiterLabelElement.rel = 'noopener noreferrer';
-        jupiterLabelElement.className = 'label jupiter-label';
-        jupiterLabelElement.textContent = 'JUPITER';
-        labelsContainer.appendChild(jupiterLabelElement);
-    }
+    let centerX = 0;
+    let centerY = 0;
 
     function generateStars(count = 220) {
         stars = [];
@@ -259,80 +174,29 @@
                 x: Math.random(),
                 y: Math.random(),
                 size: Math.random() * 2 + 0.5,
-                brightness: Math.random() * 0.45 + 0.2
+                brightness: Math.random() * 0.45 + 0.2,
             });
         }
     }
 
-    function updatePlanetHit(hitElement, position) {
-        if (!hitElement || !position.radius) {
-            return;
-        }
+    function drawBackground() {
+        ctx.fillStyle = '#0a0a18';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        const hitSize = position.radius * hitGlowMultiplier;
-        hitElement.style.left = position.x + 'px';
-        hitElement.style.top = position.y + 'px';
-        hitElement.style.width = hitSize + 'px';
-        hitElement.style.height = hitSize + 'px';
-    }
+        const gradient = ctx.createRadialGradient(
+            centerX,
+            centerY,
+            0,
+            centerX,
+            centerY,
+            Math.max(canvas.width, canvas.height),
+        );
+        gradient.addColorStop(0, 'rgba(35, 45, 75, 0.35)');
+        gradient.addColorStop(1, 'rgba(10, 10, 20, 0.9)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    function getLabelLayout(position) {
-        const minDimension = Math.min(canvas.width, canvas.height);
-        const labelGap = Math.max(6, minDimension * 0.01);
-        const glowPadding = position.radius * 0.2;
-        const aboveTop = position.y - position.radius - glowPadding - labelGap;
-        const minTop = labelHeightEstimate + 6;
-
-        if (aboveTop >= minTop) {
-            return { top: aboveTop, below: false };
-        }
-
-        return {
-            top: position.y + position.radius + glowPadding + labelGap,
-            below: true,
-        };
-    }
-
-    function updateLabelElement(labelElement, position) {
-        if (!labelElement || !position.radius) {
-            return;
-        }
-
-        const layout = getLabelLayout(position);
-        labelElement.style.left = position.x + 'px';
-        labelElement.style.top = layout.top + 'px';
-        labelElement.classList.toggle('label--below', layout.below);
-    }
-
-    function updateLabels() {
-        updatePlanetHit(sunHitElement, sunPosition);
-        updatePlanetHit(venusHitElement, venusPosition);
-        updatePlanetHit(moonHitElement, moonPosition);
-        updatePlanetHit(jupiterHitElement, jupiterPosition);
-
-        updateLabelElement(sunLabelElement, sunPosition);
-        updateLabelElement(venusLabelElement, venusPosition);
-        updateLabelElement(moonLabelElement, moonPosition);
-        updateLabelElement(jupiterLabelElement, jupiterPosition);
-    }
-
-    function drawPlanet(x, y, color, size, glowColor) {
-        ctx.beginPath();
-        ctx.fillStyle = color;
-        ctx.shadowColor = glowColor;
-        ctx.shadowBlur = size * 1.8;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-
-        ctx.arc(x, y, size, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
-    }
-
-    function drawBackgroundStars() {
-        for (let star of stars) {
+        for (const star of stars) {
             ctx.fillStyle = `rgba(255, 250, 240, ${star.brightness})`;
             ctx.beginPath();
             ctx.arc(star.x * canvas.width, star.y * canvas.height, star.size, 0, Math.PI * 2);
@@ -340,39 +204,18 @@
         }
     }
 
-    function animate() {
-        ctx.fillStyle = '#0a0a18';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(canvas.width, canvas.height));
-        gradient.addColorStop(0, 'rgba(35, 45, 75, 0.35)');
-        gradient.addColorStop(1, 'rgba(10, 10, 20, 0.9)');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        drawBackgroundStars();
-        drawPlanet(jupiterPosition.x, jupiterPosition.y, '#c0a89c', jupiterPosition.radius, 'rgba(255, 225, 180, 0.3)');
-        drawPlanet(moonPosition.x, moonPosition.y, '#c0c5c9', moonPosition.radius, 'rgba(255, 255, 255, 0.3)');
-        drawPlanet(venusPosition.x, venusPosition.y, '#e8cda8', venusPosition.radius, 'rgba(255, 220, 160, 0.35)');
-        drawPlanet(sunPosition.x, sunPosition.y, '#f5d371', sunPosition.radius, 'rgba(245, 211, 113, 0.55)');
-
-        updateLabels();
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        centerX = canvas.width / 2;
+        centerY = canvas.height / 2;
+        drawBackground();
     }
 
-    resizeCanvas();
     generateStars();
-    createLabels();
-    animate();
-    
-    window.addEventListener('resize', () => {
-        resizeCanvas();
-        animate();
-        updateLabels();
-    });
+    resizeCanvas();
 
-    window.addEventListener('load', () => {
-        setTimeout(updateLabels, 50);
-    });
+    window.addEventListener('resize', resizeCanvas);
 </script>
 </body>
 </html>
