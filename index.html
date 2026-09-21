@@ -111,6 +111,36 @@
             background: #f5d371;
             box-shadow: 0 0 clamp(18px, 6vw, 36px) rgba(245, 211, 113, 0.55);
         }
+
+        .solar-ship {
+            position: absolute;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(4px, 1vh, 10px);
+            max-width: 160px;
+            text-decoration: none;
+            pointer-events: auto;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+        }
+
+        .solar-ship[hidden] {
+            display: none;
+        }
+
+        .solar-ship .solar-planet__label {
+            color: #d7dde8;
+        }
+
+        .solar-ship .solar-planet__sphere {
+            width: clamp(20px, 6.5vw, 34px);
+            height: clamp(20px, 6.5vw, 34px);
+            background: #8b93a3;
+            box-shadow: 0 0 clamp(10px, 3.5vw, 20px) rgba(180, 200, 255, 0.28);
+        }
     </style>
 </head>
 <body>
@@ -120,11 +150,11 @@
         <nav class="solar-map" aria-label="Карта системы">
             <a
                 class="solar-planet solar-planet--jupiter"
-                href="https://cu584805.tw1.ru/"
+                href="https://ce988301.tw1.ru/"
                 target="_blank"
                 rel="noopener noreferrer"
             >
-                <span class="solar-planet__label">JUPITER [offline]</span>
+                <span class="solar-planet__label">JUPITER</span>
                 <span class="solar-planet__sphere" aria-hidden="true"></span>
             </a>
 
@@ -158,6 +188,17 @@
                 <span class="solar-planet__sphere" aria-hidden="true"></span>
             </a>
         </nav>
+
+        <a
+            id="solarShip"
+            class="solar-ship"
+            href="ship/"
+            aria-label="Инопланетный корабль"
+            hidden
+        >
+            <span class="solar-planet__label" id="solarShipLabel">SHIP</span>
+            <span class="solar-planet__sphere" aria-hidden="true"></span>
+        </a>
     </div>
 
 <script>
@@ -166,6 +207,40 @@
     let stars = [];
     let centerX = 0;
     let centerY = 0;
+
+    const SHIP_NAMES = [
+        'VESTIGE',
+        'AFTERIMAGE',
+        'ASH DRIFT',
+        'NULL ARK',
+        'MNEME',
+        'LETHE',
+        'ORPHAN',
+        'TMP-04',
+        'PROXY',
+        'GHOST HOLD',
+        'REMNANT',
+        'UNMARKED',
+        'XV-SILENT',
+        'DUST BIN',
+        'ECHO-9',
+    ];
+
+    function placeShip() {
+        const ship = document.getElementById('solarShip');
+        const label = document.getElementById('solarShipLabel');
+        if (!ship || !label) return;
+
+        label.textContent = SHIP_NAMES[Math.floor(Math.random() * SHIP_NAMES.length)];
+
+        const marginX = 0.12;
+        const marginY = 0.1;
+        const left = (marginX + Math.random() * (1 - marginX * 2)) * 100;
+        const top = (marginY + Math.random() * (1 - marginY * 2)) * 100;
+
+        ship.style.left = `${left}%`;
+        ship.style.top = `${top}%`;
+    }
 
     function generateStars(count = 220) {
         stars = [];
@@ -214,6 +289,7 @@
 
     generateStars();
     resizeCanvas();
+    placeShip();
 
     window.addEventListener('resize', resizeCanvas);
 </script>
