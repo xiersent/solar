@@ -70,10 +70,6 @@
             line-height: 1.1;
         }
 
-        .solar-planet--venus .solar-planet__label {
-            color: #f5e6c8;
-        }
-
         .solar-planet--sun .solar-planet__label {
             font-size: clamp(16px, 3.4vw, 24px);
         }
@@ -112,34 +108,19 @@
             box-shadow: 0 0 clamp(18px, 6vw, 36px) rgba(245, 211, 113, 0.55);
         }
 
-        .solar-ship {
-            position: absolute;
-            z-index: 3;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: clamp(4px, 1vh, 10px);
-            max-width: 160px;
-            text-decoration: none;
-            pointer-events: auto;
-            cursor: pointer;
-            transform: translate(-50%, -50%);
+        .solar-ship__icon {
+            display: block;
+            width: clamp(28px, 9vw, 42px);
+            height: clamp(28px, 9vw, 42px);
+            flex-shrink: 0;
+            color: #a8b0c0;
+            filter: drop-shadow(0 0 clamp(8px, 3vw, 16px) rgba(180, 200, 255, 0.35));
         }
 
-        .solar-ship[hidden] {
-            display: none;
-        }
-
-        .solar-ship .solar-planet__label {
-            color: #d7dde8;
-        }
-
-        .solar-ship .solar-planet__sphere {
-            width: clamp(20px, 6.5vw, 34px);
-            height: clamp(20px, 6.5vw, 34px);
-            background: #8b93a3;
-            box-shadow: 0 0 clamp(10px, 3.5vw, 20px) rgba(180, 200, 255, 0.28);
+        .solar-ship__icon svg {
+            display: block;
+            width: 100%;
+            height: 100%;
         }
     </style>
 </head>
@@ -148,6 +129,21 @@
         <canvas id="solarCanvas" aria-hidden="true"></canvas>
 
         <nav class="solar-map" aria-label="Карта системы">
+            <a
+                class="solar-planet solar-ship"
+                href="https://xiersent.github.io/ship/"
+                aria-label="Корабль"
+            >
+                <span class="solar-planet__label">SHIP</span>
+                <span class="solar-ship__icon" aria-hidden="true">
+                    <svg viewBox="0 0 48 48" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M24 3C24 3 17 14 17 22v8l-6 5v3l9-3h1.5L24 45l2.5-10H28l9 3v-3l-6-5v-8C31 14 24 3 24 3z"/>
+                        <ellipse cx="24" cy="20" rx="3.2" ry="4.5" fill="#0a0a14"/>
+                        <path d="M17 30h14" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.55"/>
+                    </svg>
+                </span>
+            </a>
+
             <a
                 class="solar-planet solar-planet--jupiter"
                 href="https://ce988301.tw1.ru/"
@@ -188,17 +184,6 @@
                 <span class="solar-planet__sphere" aria-hidden="true"></span>
             </a>
         </nav>
-
-        <a
-            id="solarShip"
-            class="solar-ship"
-            href="ship/"
-            aria-label="Инопланетный корабль"
-            hidden
-        >
-            <span class="solar-planet__label" id="solarShipLabel">SHIP</span>
-            <span class="solar-planet__sphere" aria-hidden="true"></span>
-        </a>
     </div>
 
 <script>
@@ -207,40 +192,6 @@
     let stars = [];
     let centerX = 0;
     let centerY = 0;
-
-    const SHIP_NAMES = [
-        'VESTIGE',
-        'AFTERIMAGE',
-        'ASH DRIFT',
-        'NULL ARK',
-        'MNEME',
-        'LETHE',
-        'ORPHAN',
-        'TMP-04',
-        'PROXY',
-        'GHOST HOLD',
-        'REMNANT',
-        'UNMARKED',
-        'XV-SILENT',
-        'DUST BIN',
-        'ECHO-9',
-    ];
-
-    function placeShip() {
-        const ship = document.getElementById('solarShip');
-        const label = document.getElementById('solarShipLabel');
-        if (!ship || !label) return;
-
-        label.textContent = SHIP_NAMES[Math.floor(Math.random() * SHIP_NAMES.length)];
-
-        const marginX = 0.12;
-        const marginY = 0.1;
-        const left = (marginX + Math.random() * (1 - marginX * 2)) * 100;
-        const top = (marginY + Math.random() * (1 - marginY * 2)) * 100;
-
-        ship.style.left = `${left}%`;
-        ship.style.top = `${top}%`;
-    }
 
     function generateStars(count = 220) {
         stars = [];
@@ -289,7 +240,6 @@
 
     generateStars();
     resizeCanvas();
-    placeShip();
 
     window.addEventListener('resize', resizeCanvas);
 </script>
