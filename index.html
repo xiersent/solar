@@ -122,6 +122,25 @@
             width: 100%;
             height: 100%;
         }
+
+        .solar-planet--smartytech {
+            max-width: 160px;
+        }
+
+        .solar-pixelship__icon {
+            display: block;
+            width: clamp(32px, 12vw, 48px);
+            height: clamp(32px, 12vw, 48px);
+            flex-shrink: 0;
+            filter: drop-shadow(0 0 clamp(8px, 3vw, 16px) rgba(176, 90, 255, 0.5));
+        }
+
+        .solar-pixelship__icon svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+            shape-rendering: crispEdges;
+        }
     </style>
 </head>
 <body>
@@ -140,6 +159,51 @@
                         <path d="M24 3C24 3 17 14 17 22v8l-6 5v3l9-3h1.5L24 45l2.5-10H28l9 3v-3l-6-5v-8C31 14 24 3 24 3z"/>
                         <ellipse cx="24" cy="20" rx="3.2" ry="4.5" fill="#0a0a14"/>
                         <path d="M17 30h14" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.55"/>
+                    </svg>
+                </span>
+            </a>
+
+            <a
+                class="solar-planet solar-planet--smartytech"
+                href="https://xiersent.github.io/smartytech/"
+            >
+                <span class="solar-planet__label">SMARTYTECH</span>
+                <span class="solar-pixelship__icon" aria-hidden="true">
+                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                        <g fill="#7e22ce">
+                            <rect x="6" y="1" width="4" height="1"/>
+                            <rect x="3" y="7" width="2" height="1"/>
+                            <rect x="11" y="7" width="2" height="1"/>
+                            <rect x="2" y="8" width="3" height="2"/>
+                            <rect x="11" y="8" width="3" height="2"/>
+                        </g>
+                        <g fill="#6b21a8">
+                            <rect x="7" y="0" width="2" height="1"/>
+                        </g>
+                        <g fill="#c084fc">
+                            <rect x="5" y="3" width="6" height="1"/>
+                            <rect x="5" y="4" width="1" height="3"/>
+                            <rect x="10" y="4" width="1" height="3"/>
+                            <rect x="5" y="7" width="6" height="3"/>
+                        </g>
+                        <g fill="#e9d5ff">
+                            <rect x="5" y="2" width="6" height="1"/>
+                        </g>
+                        <g fill="#fde047">
+                            <rect x="6" y="10" width="4" height="1"/>
+                            <rect x="7" y="11" width="2" height="1"/>
+                        </g>
+                        <g fill="#fff4b0">
+                            <rect x="7" y="10" width="2" height="1"/>
+                        </g>
+                        <g fill="#fb923c">
+                            <rect x="6" y="11" width="1" height="1"/>
+                            <rect x="9" y="11" width="1" height="1"/>
+                            <rect x="7" y="12" width="2" height="1"/>
+                        </g>
+                        <g fill="#f97316">
+                            <rect x="7" y="13" width="2" height="1"/>
+                        </g>
                     </svg>
                 </span>
             </a>
